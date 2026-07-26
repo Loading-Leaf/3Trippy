@@ -1,5 +1,6 @@
 import os
 import pygame
+from config import get_resource_path
 
 class AudioManager:
     def __init__(self):
@@ -19,7 +20,8 @@ class AudioManager:
             'levelup': 'sounds/sfx_levelup.wav',
             'gameover': 'sounds/sfx_gameover.wav'
         }
-        for key, path in sound_files.items():
+        for key, rel_path in sound_files.items():
+            path = get_resource_path(rel_path)
             if os.path.exists(path):
                 self.sounds[key] = pygame.mixer.Sound(path)
                 
@@ -32,9 +34,10 @@ class AudioManager:
         if self.current_bgm == filename:
             return
         self.current_bgm = filename
-        if os.path.exists(filename):
+        path = get_resource_path(filename)
+        if os.path.exists(path):
             try:
-                pygame.mixer.music.load(filename)
+                pygame.mixer.music.load(path)
                 pygame.mixer.music.set_volume(0.4 if not self.muted else 0.0)
                 pygame.mixer.music.play(-1)
             except Exception as e:

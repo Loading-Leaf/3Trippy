@@ -14,7 +14,8 @@ from config import (
     COLOR_BG, COLOR_PANEL_BG, COLOR_PANEL_BORDER, COLOR_BOARD_BG, COLOR_BOARD_GRID,
     COLOR_TEXT, COLOR_MUTED_TEXT, COLOR_ACCENT, COLOR_ACCENT_HOVER,
     COLOR_BUTTON, COLOR_BUTTON_HOVER, COLOR_BUTTON_SECONDARY, COLOR_BUTTON_SECONDARY_HOVER,
-    COLOR_SELECTION, COLOR_COMBO_TEXT, COLOR_MILESTONE_BG, COLOR_MILESTONE_BORDER
+    COLOR_SELECTION, COLOR_COMBO_TEXT, COLOR_MILESTONE_BG, COLOR_MILESTONE_BORDER,
+    get_resource_path
 )
 
 from audio_manager import AudioManager
@@ -277,7 +278,7 @@ class GameApp:
         self.screen = self.virtual_surface
 
     def setup_fonts(self):
-        font_path = os.path.join('fonts', 'JapaneseFont.ttf')
+        font_path = get_resource_path(os.path.join('fonts', 'JapaneseFont.ttf'))
         if os.path.exists(font_path):
             try:
                 self.font_large = pygame.font.Font(font_path, 40)
@@ -296,7 +297,7 @@ class GameApp:
 
 
     def load_images(self):
-        title_path = os.path.join('sprite', 'title.png')
+        title_path = get_resource_path(os.path.join('sprite', 'title.png'))
         if os.path.exists(title_path):
             title_raw = pygame.image.load(title_path).convert_alpha()
             self.img_title = pygame.transform.smoothscale(title_raw, (300, 300))
@@ -304,7 +305,7 @@ class GameApp:
             self.img_title = None
 
         self.tile_sprites = []
-        puzzle_dir = os.path.join('sprite', 'puzzle')
+        puzzle_dir = get_resource_path(os.path.join('sprite', 'puzzle'))
         self.tile_colors = [
             (255, 80, 80), (80, 160, 255), (80, 220, 100),
             (255, 220, 60), (200, 100, 255), (255, 140, 40)
