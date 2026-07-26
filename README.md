@@ -30,7 +30,7 @@ Pythonなどの実行環境をインストールすることなく、ダウン�
 ### 2. Webブラウザでプレイ（オンライン）
 GitHub Pages等にデプロイされているWeb版を利用することで、ブラウザ上で直接遊ぶことができます。
 
-* [Web版 3Trippy で遊ぶ](https://<YOUR_GITHUB_USERNAME>.github.io/3Trippy/) *(※GitHub Pagesが有効な場合)*
+* [Web版 3Trippy で遊ぶ](https://Loading-Leaf.github.io/3Trippy/) *(※GitHub Pagesが有効な場合)*
 
 ---
 
