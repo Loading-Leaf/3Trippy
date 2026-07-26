@@ -5,6 +5,8 @@ import time
 import math
 import random
 import copy
+import asyncio
+
 
 from config import (
     LOGICAL_WIDTH, LOGICAL_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, FPS, BOARD_ROWS, BOARD_COLS, TILE_SIZE,
@@ -442,7 +444,7 @@ class GameApp:
         self.queue_cascade_animations(combo_step + 1)
 
 
-    def run(self):
+    async def run(self):
         while True:
             dt = self.clock.tick(FPS) / 1000.0
             self.anim_time += dt
@@ -450,6 +452,8 @@ class GameApp:
             self.update(dt)
             self.draw()
             pygame.display.flip()
+            await asyncio.sleep(0)
+
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -917,6 +921,10 @@ class GameApp:
         self.btn_over_restart.draw(self.screen)
         self.btn_over_title.draw(self.screen)
 
-if __name__ == '__main__':
+async def main():
     app = GameApp()
-    app.run()
+    await app.run()
+
+if __name__ == '__main__':
+    asyncio.run(main())
+
