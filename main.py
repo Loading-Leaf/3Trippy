@@ -144,41 +144,46 @@ class Button:
 def render_wrapped_text(surface, text, font, color, rect, align='left', line_spacing=4):
     """
     Renders multi-line wrapped text inside `rect` on `surface`.
-    Supports CJK (Japanese) character wrapping without overflowing rect boundaries.
+    Supports CJK (Japanese) character wrapping and explicit newline (\n) splitting without overflowing rect boundaries.
     `align` can be 'left' or 'center'.
     """
     if not text:
         return
-    words_or_chars = []
-    current_word = ""
-    for char in text:
-        if char == ' ':
-            if current_word:
-                words_or_chars.append(current_word + ' ')
-                current_word = ""
-        else:
-            if ord(char) > 127: # CJK / Japanese character
-                if current_word:
-                    words_or_chars.append(current_word)
-                    current_word = ""
-                words_or_chars.append(char)
-            else:
-                current_word += char
-    if current_word:
-        words_or_chars.append(current_word)
-
+    paragraphs = text.split('\n')
     lines = []
-    current_line = ""
-    for item in words_or_chars:
-        test_line = current_line + item
-        if font.size(test_line.strip())[0] <= rect.width:
-            current_line = test_line
-        else:
-            if current_line.strip():
-                lines.append(current_line.strip())
-            current_line = item
-    if current_line.strip():
-        lines.append(current_line.strip())
+    for para in paragraphs:
+        if not para:
+            lines.append("")
+            continue
+        words_or_chars = []
+        current_word = ""
+        for char in para:
+            if char == ' ':
+                if current_word:
+                    words_or_chars.append(current_word + ' ')
+                    current_word = ""
+            else:
+                if ord(char) > 127: # CJK / Japanese character
+                    if current_word:
+                        words_or_chars.append(current_word)
+                        current_word = ""
+                    words_or_chars.append(char)
+                else:
+                    current_word += char
+        if current_word:
+            words_or_chars.append(current_word)
+
+        current_line = ""
+        for item in words_or_chars:
+            test_line = current_line + item
+            if font.size(test_line.strip())[0] <= rect.width:
+                current_line = test_line
+            else:
+                if current_line.strip():
+                    lines.append(current_line.strip())
+                current_line = item
+        if current_line.strip():
+            lines.append(current_line.strip())
 
     line_height = font.get_height()
     y = rect.top
@@ -186,13 +191,15 @@ def render_wrapped_text(surface, text, font, color, rect, align='left', line_spa
     for line in lines:
         if y + line_height > rect.bottom:
             break
-        txt_surf = font.render(line, True, color)
-        if align == 'center':
-            txt_rect = txt_surf.get_rect(center=(rect.centerx, y + line_height // 2))
-            surface.blit(txt_surf, txt_rect)
-        else:
-            surface.blit(txt_surf, (rect.left, y))
+        if line:
+            txt_surf = font.render(line, True, color)
+            if align == 'center':
+                txt_rect = txt_surf.get_rect(center=(rect.centerx, y + line_height // 2))
+                surface.blit(txt_surf, txt_rect)
+            else:
+                surface.blit(txt_surf, (rect.left, y))
         y += line_height + line_spacing
+
 
 class GameApp:
     def __init__(self):
@@ -704,14 +711,16 @@ class GameApp:
             next_thresh = next_area[0]
             prog_ratio = min(1.0, max(0.0, (self.score - prev_thresh) / float(next_thresh - prev_thresh)))
             
-            lbl_next = self.font_tiny.render(f"NEXT: {next_area[1]} ({next_thresh:,} pt)", True, COLOR_MUTED_TEXT)
-            self.screen.blit(lbl_next, (50, 290))
+            next_text = f"NEXT: {next_area[1]}\n({next_thresh:,} pt)"
+            next_rect = pygame.Rect(50, 290, 225, 40)
+            render_wrapped_text(self.screen, next_text, self.font_tiny, COLOR_MUTED_TEXT, next_rect, align='left', line_spacing=2)
             
-            bar_rect = pygame.Rect(50, 315, 225, 14)
+            bar_rect = pygame.Rect(50, 335, 225, 14)
             pygame.draw.rect(self.screen, (20, 25, 40), bar_rect, border_radius=7)
-            fill_rect = pygame.Rect(50, 315, int(225 * prog_ratio), 14)
+            fill_rect = pygame.Rect(50, 335, int(225 * prog_ratio), 14)
             if fill_rect.width > 0:
                 pygame.draw.rect(self.screen, COLOR_ACCENT, fill_rect, border_radius=7)
+
         else:
             lbl_next = self.font_small.render("🎉 世界一周達成！", True, COLOR_ACCENT)
             self.screen.blit(lbl_next, (50, 290))
