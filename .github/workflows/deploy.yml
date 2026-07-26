@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
@@ -28,6 +30,8 @@ jobs:
           pip install pygbag pygame
 
       - name: Build Web App with Pygbag
+        env:
+          PYTHONUTF8: '1'
         run: |
           python -m pygbag --disable-sound-format-error --build main.py
 
