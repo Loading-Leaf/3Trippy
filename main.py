@@ -215,8 +215,9 @@ class GameApp:
         
         # Display setup with REZISABLE flag
         self.real_screen = pygame.display.set_mode((self.win_width, self.win_height), pygame.RESIZABLE)
-        self.screen = self.real_screen
         self.virtual_surface = pygame.Surface((LOGICAL_WIDTH, LOGICAL_HEIGHT))
+        self.screen = self.virtual_surface
+
         
         self.clock = pygame.time.Clock()
         self.audio = AudioManager()
@@ -273,14 +274,26 @@ class GameApp:
             self.real_screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN | pygame.RESIZABLE)
         else:
             self.real_screen = pygame.display.set_mode((LOGICAL_WIDTH, LOGICAL_HEIGHT), pygame.RESIZABLE)
-        self.screen = self.real_screen
+        self.screen = self.virtual_surface
 
     def setup_fonts(self):
+        font_path = os.path.join('fonts', 'JapaneseFont.ttf')
+        if os.path.exists(font_path):
+            try:
+                self.font_large = pygame.font.Font(font_path, 40)
+                self.font_medium = pygame.font.Font(font_path, 24)
+                self.font_small = pygame.font.Font(font_path, 18)
+                self.font_tiny = pygame.font.Font(font_path, 14)
+                return
+            except Exception as e:
+                print(f"Failed loading bundled Japanese font: {e}")
+
         jp_fonts = ['msgothic', 'meiryo', 'yu gothic', 'hiragino sans', 'arial']
         self.font_large = pygame.font.SysFont(jp_fonts, 42, bold=True)
         self.font_medium = pygame.font.SysFont(jp_fonts, 28, bold=True)
         self.font_small = pygame.font.SysFont(jp_fonts, 20)
         self.font_tiny = pygame.font.SysFont(jp_fonts, 16)
+
 
     def load_images(self):
         title_path = os.path.join('sprite', 'title.png')
@@ -465,7 +478,8 @@ class GameApp:
                 if not self.is_fullscreen:
                     self.win_width, self.win_height = event.w, event.h
                     self.real_screen = pygame.display.set_mode((self.win_width, self.win_height), pygame.RESIZABLE)
-                    self.screen = self.real_screen
+                    self.screen = self.virtual_surface
+
 
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_F11 or (event.key == pygame.K_RETURN and (event.mod & pygame.KMOD_ALT)):
@@ -610,7 +624,7 @@ class GameApp:
                         self.is_animating = False
 
     def draw(self):
-        self.screen.fill(COLOR_BG)
+        self.virtual_surface.fill(COLOR_BG)
 
         if self.scene == SCENE_TITLE:
             self.draw_title_scene()
@@ -619,7 +633,18 @@ class GameApp:
         elif self.scene == SCENE_GAME:
             self.draw_game_scene()
         elif self.scene == SCENE_GAME_OVER:
+            self.draw_game_scene()
             self.draw_gameover_scene()
+
+        # Scale virtual_surface onto real_screen keeping aspect ratio
+        scale, offset_x, offset_y = self.get_scale_and_offset()
+        scaled_w = max(1, int(LOGICAL_WIDTH * scale))
+        scaled_h = max(1, int(LOGICAL_HEIGHT * scale))
+
+        self.real_screen.fill(COLOR_BG)
+        scaled_surf = pygame.transform.smoothscale(self.virtual_surface, (scaled_w, scaled_h))
+        self.real_screen.blit(scaled_surf, (offset_x, offset_y))
+
 
     def draw_title_scene(self):
         pygame.draw.circle(self.screen, (30, 45, 75), (150, 130), 180)
