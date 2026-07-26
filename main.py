@@ -231,6 +231,8 @@ class GameApp:
         self.board = Board()
         self.score = 0
         self.selected_tile = None
+        self.drag_start_tile = None
+        self.drag_start_pos = None
         
         # Area Progression Tracking
         self.current_area_index = 0
@@ -342,6 +344,8 @@ class GameApp:
         self.score = 0
         self.board.reset_board()
         self.selected_tile = None
+        self.drag_start_tile = None
+        self.drag_start_pos = None
         self.current_area_index = 0
         self.unlocked_area_indices = {0}
         self.milestone_banner = None
@@ -517,33 +521,65 @@ class GameApp:
                 elif self.btn_game_title.handle_event(event):
                     self.audio.play_sfx('click')
                     self.scene = SCENE_TITLE
+                    self.drag_start_tile = None
+                    self.drag_start_pos = None
+                    self.selected_tile = None
                     self.audio.play_bgm('sounds/bgm_title.wav')
 
-
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    # Ignore mouse clicks while animations are playing
                     if self.is_animating:
                         continue
-                        
                     mx, my = event.pos
                     col = (mx - BOARD_OFFSET_X) // TILE_SIZE
                     row = (my - BOARD_OFFSET_Y) // TILE_SIZE
-                    
                     if 0 <= row < BOARD_ROWS and 0 <= col < BOARD_COLS:
-                        if self.selected_tile is None:
-                            self.selected_tile = (row, col)
-                            self.audio.play_sfx('select')
-                        else:
-                            r1, c1 = self.selected_tile
-                            r2, c2 = row, col
-                            if (r1, c1) == (r2, c2):
-                                self.selected_tile = None
-                            elif abs(r1 - r2) + abs(c1 - c2) == 1:
-                                self.selected_tile = None
-                                self.trigger_swap_animation(r1, c1, r2, c2)
+                        self.drag_start_tile = (row, col)
+                        self.drag_start_pos = (mx, my)
+                        self.selected_tile = (row, col)
+                        self.audio.play_sfx('select')
+
+                elif event.type == pygame.MOUSEMOTION:
+                    if self.drag_start_tile is not None and not self.is_animating:
+                        r1, c1 = self.drag_start_tile
+                        sx, sy = self.drag_start_pos
+                        mx, my = event.pos
+                        dx = mx - sx
+                        dy = my - sy
+                        
+                        SWIPE_THRESHOLD = 15
+                        if abs(dx) >= SWIPE_THRESHOLD or abs(dy) >= SWIPE_THRESHOLD:
+                            if abs(dx) > abs(dy):
+                                dr, dc = 0, 1 if dx > 0 else -1
                             else:
-                                self.selected_tile = (r2, c2)
-                                self.audio.play_sfx('select')
+                                dr, dc = 1 if dy > 0 else -1, 0
+                            
+                            r2, c2 = r1 + dr, c1 + dc
+                            self.selected_tile = None
+                            self.drag_start_tile = None
+                            self.drag_start_pos = None
+                            if 0 <= r2 < BOARD_ROWS and 0 <= c2 < BOARD_COLS:
+                                self.trigger_swap_animation(r1, c1, r2, c2)
+
+                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                    if self.drag_start_tile is not None:
+                        if not self.is_animating:
+                            r1, c1 = self.drag_start_tile
+                            sx, sy = self.drag_start_pos
+                            mx, my = event.pos
+                            dx = mx - sx
+                            dy = my - sy
+                            SWIPE_THRESHOLD = 15
+                            if abs(dx) >= SWIPE_THRESHOLD or abs(dy) >= SWIPE_THRESHOLD:
+                                if abs(dx) > abs(dy):
+                                    dr, dc = 0, 1 if dx > 0 else -1
+                                else:
+                                    dr, dc = 1 if dy > 0 else -1, 0
+                                r2, c2 = r1 + dr, c1 + dc
+                                if 0 <= r2 < BOARD_ROWS and 0 <= c2 < BOARD_COLS:
+                                    self.trigger_swap_animation(r1, c1, r2, c2)
+                        self.selected_tile = None
+                        self.drag_start_tile = None
+                        self.drag_start_pos = None
 
             elif self.scene == SCENE_GAME_OVER:
                 if self.btn_over_restart.handle_event(event):
@@ -679,7 +715,7 @@ class GameApp:
 
         instructions = [
             "【基本操作】",
-            "・ピースをクリックして選択し、隣のピースを入れ替えて3つ以上並べます。",
+            "・ピースを動かしたい方向にスワイプ（ドラッグ）して入れ替え、3つ以上並べます。",
             "",
             "【特殊爆弾＆アイテム（Candy & POP）】",
             "・4消し（横/縦移動）: 一行・一列を全消去する「ライン爆弾 ↔/↕」生成！",
